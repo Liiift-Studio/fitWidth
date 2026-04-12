@@ -1,6 +1,6 @@
 "use client"
 
-// Interactive demo: drag a width slider (or move cursor/tilt) to see headlines fill their container exactly
+// Interactive demo: drag a width slider (or move cursor/tilt/angular) to see headlines fill their container exactly
 import { useState, useEffect, useCallback, useLayoutEffect, useRef } from "react"
 import { applyFitWidth } from "@liiift-studio/fitwidth"
 import type { FitWidthOptions } from "@liiift-studio/fitwidth"
@@ -109,7 +109,7 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 	)
 }
 
-/** Interactive demo with container width slider, prefer mode toggle, and cursor/gyro */
+/** Interactive demo with container width slider, prefer mode toggle, cursor/gyro, and angular width */
 export default function Demo() {
 	const [containerPct, setContainerPct] = useState(80)
 	const [prefer, setPrefer] = useState<PreferMode>('auto')
@@ -118,6 +118,14 @@ export default function Demo() {
 	// Interaction modes — mutually exclusive
 	const [cursorMode, setCursorMode] = useState(false)
 	const [gyroMode, setGyroMode] = useState(false)
+	const [angularMode, setAngularMode] = useState(false)
+
+	// Angular mode parameters
+	const [viewingDistanceCm, setViewingDistanceCm] = useState(60)
+	const [angleDeg, setAngleDeg] = useState(5)
+
+	// Ref to the outer wrapper to measure actual container pixel width for angular computation
+	const demoRef = useRef<HTMLDivElement>(null)
 
 	// Gyro-driven container pct — kept separate from slider state so slider value props
 	// never change during gyro mode (which would cause mobile to scroll to the input)
@@ -134,8 +142,20 @@ export default function Demo() {
 		setShowGyro(isTouch && 'DeviceOrientationEvent' in window)
 	}, [])
 
-	// Effective container pct: gyro-driven when gyroMode active, slider-driven otherwise
-	const effectiveContainerPct = gyroMode ? gyroContainerPct : containerPct
+	// Compute pixel target from angular parameters: 2 * distance_mm * tan(angle/2) * (96px/25.4mm)
+	const angularPxTarget = 2 * (viewingDistanceCm * 10) * Math.tan((angleDeg / 2) * (Math.PI / 180)) * (96 / 25.4)
+	const angularPxRounded = Math.round(angularPxTarget)
+
+	// Compute effective container pct from angular pixel target relative to actual container width
+	const angularContainerWidth = demoRef.current?.getBoundingClientRect().width ?? 800
+	const angularContainerPct = Math.min(100, Math.max(1, (angularPxTarget / angularContainerWidth) * 100))
+
+	// Effective container pct — priority: gyro > angular > slider
+	const effectiveContainerPct = gyroMode
+		? gyroContainerPct
+		: angularMode
+			? angularContainerPct
+			: containerPct
 
 	// Cursor mode — X controls container width (left = narrow, right = wide)
 	useEffect(() => {
@@ -178,19 +198,21 @@ export default function Demo() {
 		}
 	}, [gyroMode])
 
-	// Toggle cursor mode — turns off gyro if active
+	// Toggle cursor mode — turns off gyro and angular if active
 	const toggleCursor = () => {
 		setGyroMode(false)
+		setAngularMode(false)
 		setCursorMode(v => !v)
 	}
 
-	// Toggle gyro mode — requests iOS permission if needed, turns off cursor if active
+	// Toggle gyro mode — requests iOS permission if needed, turns off cursor and angular if active
 	const toggleGyro = async () => {
 		if (gyroMode) {
 			setGyroMode(false)
 			return
 		}
 		setCursorMode(false)
+		setAngularMode(false)
 		const DOE = DeviceOrientationEvent as typeof DeviceOrientationEvent & {
 			requestPermission?: () => Promise<PermissionState>
 		}
@@ -202,30 +224,79 @@ export default function Demo() {
 		}
 	}
 
+	// Toggle angular mode — turns off cursor and gyro if active
+	const toggleAngular = () => {
+		setCursorMode(false)
+		setGyroMode(false)
+		setAngularMode(v => !v)
+	}
+
 	const activeMode = cursorMode || gyroMode
 
 	return (
-		<div className="w-full flex flex-col gap-8">
+		<div ref={demoRef} className="w-full flex flex-col gap-8">
 			{/* Controls */}
 			<div className="flex flex-wrap items-center gap-6">
-				{/* Container width slider */}
-				<div className="flex flex-col gap-1 min-w-48 flex-1">
-					<div className="flex justify-between text-xs uppercase tracking-widest opacity-50">
-						<span>Container Width</span>
-						<span className="tabular-nums">{containerPct}%</span>
+				{/* Container width slider — hidden in angular mode */}
+				{!angularMode && (
+					<div className="flex flex-col gap-1 min-w-48 flex-1">
+						<div className="flex justify-between text-xs uppercase tracking-widest opacity-50">
+							<span>Container Width</span>
+							<span className="tabular-nums">{containerPct}%</span>
+						</div>
+						<input
+							type="range"
+							min={30}
+							max={100}
+							step={1}
+							value={containerPct}
+							aria-label="Container width percentage"
+							onChange={e => setContainerPct(Number(e.target.value))}
+							onTouchStart={e => e.stopPropagation()}
+							style={{ touchAction: 'none' }}
+						/>
 					</div>
-					<input
-						type="range"
-						min={30}
-						max={100}
-						step={1}
-						value={containerPct}
-						aria-label="Container width percentage"
-						onChange={e => setContainerPct(Number(e.target.value))}
-						onTouchStart={e => e.stopPropagation()}
-						style={{ touchAction: 'none' }}
-					/>
-				</div>
+				)}
+
+				{/* Angular mode sliders — shown only in angular mode */}
+				{angularMode && (
+					<>
+						<div className="flex flex-col gap-1 min-w-48 flex-1">
+							<div className="flex justify-between text-xs uppercase tracking-widest opacity-50">
+								<span>Angular Width</span>
+								<span className="tabular-nums">{angleDeg}° <span className="opacity-70">(≈ {angularPxRounded}px)</span></span>
+							</div>
+							<input
+								type="range"
+								min={0.5}
+								max={20}
+								step={0.5}
+								value={angleDeg}
+								aria-label="Angular width in degrees"
+								onChange={e => setAngleDeg(Number(e.target.value))}
+								onTouchStart={e => e.stopPropagation()}
+								style={{ touchAction: 'none' }}
+							/>
+						</div>
+						<div className="flex flex-col gap-1 min-w-48 flex-1">
+							<div className="flex justify-between text-xs uppercase tracking-widest opacity-50">
+								<span>Viewing Distance</span>
+								<span className="tabular-nums">{viewingDistanceCm}cm</span>
+							</div>
+							<input
+								type="range"
+								min={30}
+								max={150}
+								step={1}
+								value={viewingDistanceCm}
+								aria-label="Viewing distance in centimetres"
+								onChange={e => setViewingDistanceCm(Number(e.target.value))}
+								onTouchStart={e => e.stopPropagation()}
+								style={{ touchAction: 'none' }}
+							/>
+						</div>
+					</>
+				)}
 
 				{/* Prefer mode toggle */}
 				<div className="flex items-center gap-2 flex-shrink-0">
@@ -257,7 +328,7 @@ export default function Demo() {
 				</button>
 			</div>
 
-			{/* Cursor / gyro mode toggles */}
+			{/* Cursor / gyro / angular mode toggles */}
 			<div className="flex flex-wrap items-center gap-3">
 				{showCursor && (
 					<button
@@ -289,6 +360,18 @@ export default function Demo() {
 						<span>{gyroMode ? 'Tilt active' : 'Tilt'}</span>
 					</button>
 				)}
+				<button
+					onClick={toggleAngular}
+					title="Set container width by angular degrees (smart glasses / AR context)"
+					className="text-xs px-3 py-1 rounded-full border transition-all"
+					style={{
+						borderColor: 'currentColor',
+						opacity: angularMode ? 1 : 0.5,
+						background: angularMode ? 'var(--btn-bg)' : 'transparent',
+					}}
+				>
+					Angular
+				</button>
 				{activeMode && (
 					<p className="text-xs opacity-50 italic">
 						{cursorMode ? 'Move cursor left/right to adjust container width. Press Esc to exit.' : 'Tilt left/right to adjust container width.'}
