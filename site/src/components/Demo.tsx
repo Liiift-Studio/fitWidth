@@ -81,13 +81,14 @@ function HeadlineRow({ text, containerPct, prefer }: { text: string; containerPc
 					padding: '8px 0',
 					overflow: 'hidden',
 					background: 'rgba(212,184,240,0.04)',
+					// FVS on the wrapper so React never resets it on the fitted element
+					fontVariationSettings: '"wght" 300, "opsz" 72',
 				}}
 			>
 				<h1
 					ref={elRef}
 					style={{
 						fontFamily: "var(--font-merriweather), serif",
-						fontVariationSettings: '"wght" 300, "opsz" 72',
 						fontSize: "clamp(1.5rem, 5vw, 3.5rem)",
 						lineHeight: 1.1,
 						margin: 0,
