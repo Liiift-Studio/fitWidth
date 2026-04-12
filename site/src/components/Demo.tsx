@@ -36,7 +36,7 @@ function GyroIcon() {
  * React style-prop reset of fontVariationSettings on re-renders. ResizeObserver watches
  * the container div (not the inline-block element) so it fires on parent-width changes.
  */
-function HeadlineRow({ text, containerPct, prefer }: { text: string; containerPct: number; prefer: PreferMode }) {
+function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: string; containerPct: number; prefer: PreferMode; showInternals: boolean }) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const elRef = useRef<HTMLHeadingElement>(null)
 	// Ref-based readout avoids state re-renders that would reset FVS via React style prop
@@ -100,9 +100,11 @@ function HeadlineRow({ text, containerPct, prefer }: { text: string; containerPc
 				</h1>
 			</div>
 			{/* Live readout updated via ref to avoid state-driven re-renders */}
-			<div className="flex gap-6 text-xs opacity-40 font-mono tabular-nums">
-				<span ref={readoutRef}>fvs: —  ls: 0em</span>
-			</div>
+			{showInternals && (
+				<div className="flex gap-6 text-xs opacity-40 font-mono tabular-nums">
+					<span ref={readoutRef}>fvs: —  ls: 0em</span>
+				</div>
+			)}
 		</div>
 	)
 }
@@ -111,6 +113,7 @@ function HeadlineRow({ text, containerPct, prefer }: { text: string; containerPc
 export default function Demo() {
 	const [containerPct, setContainerPct] = useState(80)
 	const [prefer, setPrefer] = useState<PreferMode>('auto')
+	const [showInternals, setShowInternals] = useState(false)
 
 	// Interaction modes — mutually exclusive
 	const [cursorMode, setCursorMode] = useState(false)
@@ -243,6 +246,15 @@ export default function Demo() {
 						</button>
 					))}
 				</div>
+
+				{/* Show/hide internals toggle */}
+				<button
+					onClick={() => setShowInternals(v => !v)}
+					className="text-xs px-3 py-1 rounded-full border transition-opacity"
+					style={{ borderColor: 'currentColor', opacity: showInternals ? 1 : 0.4, background: showInternals ? 'var(--btn-bg)' : 'transparent' }}
+				>
+					{showInternals ? 'Hide internals' : 'Show internals'}
+				</button>
 			</div>
 
 			{/* Cursor / gyro mode toggles */}
@@ -292,6 +304,7 @@ export default function Demo() {
 						text={text}
 						containerPct={effectiveContainerPct}
 						prefer={prefer}
+						showInternals={showInternals}
 					/>
 				))}
 			</div>
