@@ -393,7 +393,7 @@ export default function Demo() {
 			</div>
 
 			<p className="text-xs opacity-50 italic" style={{ lineHeight: "1.8" }}>
-				Each headline fills its container exactly — to within half a pixel. Drag the slider to resize the container. Switch prefer mode to see the wdth axis or letter-spacing used in isolation.
+				Each headline fills its container exactly — to within half a pixel. Drag the slider to resize the container. Switch prefer mode to see the wdth axis or letter-spacing used in isolation. Smartwatches and fixed-width displays make this non-negotiable — a headline that almost fills a round watch face looks broken; one that fills it exactly looks intentional.
 			</p>
 		</div>
 	)
