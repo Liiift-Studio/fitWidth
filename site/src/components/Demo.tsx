@@ -89,7 +89,7 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 					ref={elRef}
 					style={{
 						fontFamily: "var(--font-merriweather), serif",
-						fontSize: "clamp(1.5rem, 5vw, 3.5rem)",
+						fontSize: "clamp(2.5rem, 8vw, 6rem)",
 						lineHeight: 1.1,
 						margin: 0,
 						display: 'inline-block',
