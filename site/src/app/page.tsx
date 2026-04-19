@@ -3,6 +3,8 @@ import CopyInstall from "@/components/CopyInstall"
 import CodeBlock from "@/components/CodeBlock"
 import ToolDirectory from "@/components/ToolDirectory"
 import { version } from "../../../package.json"
+import { version as siteVersion } from "../../package.json"
+import SiteFooter from "../components/SiteFooter"
 
 export default function Home() {
 	return (
@@ -111,15 +113,7 @@ removeFitWidth(el)`} />
 				</div>
 			</section>
 
-			{/* Footer */}
-			<footer className="w-full max-w-2xl lg:max-w-5xl flex flex-col gap-6 pt-8 border-t border-white/10 text-xs">
-				<ToolDirectory current="fitWidth" />
-				<hr className="border-white/10" />
-				<div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 opacity-50">
-					<a href="https://liiift.studio" className="hover:opacity-100 transition-opacity">liiift.studio</a>
-					<span className="sm:col-start-4">fitWidth v{version}</span>
-				</div>
-			</footer>
+			<SiteFooter current="fitWidth" npmVersion={version} siteVersion={siteVersion} />
 
 		</main>
 	)
