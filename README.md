@@ -1,5 +1,7 @@
 # fitWidth
 
+[![npm](https://img.shields.io/npm/v/%40liiift-studio%2Ffitwidth.svg)](https://www.npmjs.com/package/@liiift-studio/fitwidth) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![part of liiift type-tools](https://img.shields.io/badge/liiift-type--tools-blueviolet)](https://github.com/Liiift-Studio/type-tools)
+
 CSS has no native way to stretch or compress a display headline to fill an exact container width without changing font-size. `fitWidth` binary-searches the `wdth` variable font axis — and falls back to `letter-spacing` — to close that gap precisely. Type size stays constant; only inter-glyph geometry changes.
 
 **[fitwidth.com](https://fitwidth.com)** · [npm](https://www.npmjs.com/package/@liiift-studio/fitwidth) · [GitHub](https://github.com/Liiift-Studio/fitWidth)
