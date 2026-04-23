@@ -218,4 +218,73 @@ describe('fitWidth', () => {
 			tolerance: 1,
 		})).not.toThrow()
 	})
+
+	// 17. respectReducedMotion: true skips the fit when matchMedia reports reduced motion
+	it('respectReducedMotion: true skips fit when prefers-reduced-motion matches', () => {
+		const { el } = makeElement()
+		el.style.fontVariationSettings = '"wdth" 100'
+		el.style.letterSpacing = '0em'
+
+		// Simulate user having reduced motion enabled
+		vi.spyOn(window, 'matchMedia').mockReturnValue({
+			matches: true,
+			media: '(prefers-reduced-motion: reduce)',
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+			dispatchEvent: vi.fn(),
+			onchange: null,
+			addListener: vi.fn(),
+			removeListener: vi.fn(),
+		} as unknown as MediaQueryList)
+
+		applyFitWidth(el, { respectReducedMotion: true })
+
+		// Styles must be unchanged — the fit was skipped
+		expect(el.style.fontVariationSettings).toBe('"wdth" 100')
+		expect(el.style.letterSpacing).toBe('0em')
+	})
+
+	// 18. respectReducedMotion: true applies the fit normally when matchMedia does not match
+	it('respectReducedMotion: true still fits when prefers-reduced-motion does not match', () => {
+		const { el } = makeElement()
+
+		// Simulate user NOT having reduced motion enabled
+		vi.spyOn(window, 'matchMedia').mockReturnValue({
+			matches: false,
+			media: '(prefers-reduced-motion: reduce)',
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+			dispatchEvent: vi.fn(),
+			onchange: null,
+			addListener: vi.fn(),
+			removeListener: vi.fn(),
+		} as unknown as MediaQueryList)
+
+		applyFitWidth(el, { respectReducedMotion: true, prefer: 'axis' })
+
+		// Fit ran normally — fontVariationSettings should be set
+		expect(el.style.fontVariationSettings.length).toBeGreaterThan(0)
+	})
+
+	// 19. respectReducedMotion: false (default) applies the fit regardless of matchMedia
+	it('respectReducedMotion: false applies the fit regardless of motion preference', () => {
+		const { el } = makeElement()
+
+		// Even if reduced motion is preferred, the option is false so the fit runs
+		vi.spyOn(window, 'matchMedia').mockReturnValue({
+			matches: true,
+			media: '(prefers-reduced-motion: reduce)',
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+			dispatchEvent: vi.fn(),
+			onchange: null,
+			addListener: vi.fn(),
+			removeListener: vi.fn(),
+		} as unknown as MediaQueryList)
+
+		applyFitWidth(el, { respectReducedMotion: false, prefer: 'axis' })
+
+		// Fit ran — fontVariationSettings should be set
+		expect(el.style.fontVariationSettings.length).toBeGreaterThan(0)
+	})
 })

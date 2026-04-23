@@ -173,6 +173,13 @@ function binarySearchTracking(
 export function applyFitWidth(el: HTMLElement, options: FitWidthOptions = {}): void {
 	if (typeof window === 'undefined') return
 
+	// Honour prefers-reduced-motion: skip the fit if the user has requested it
+	if (
+		options.respectReducedMotion &&
+		typeof window.matchMedia === 'function' &&
+		window.matchMedia('(prefers-reduced-motion: reduce)').matches
+	) return
+
 	// Save scroll position — iOS Safari ignores overflow-anchor: none
 	const scrollY = window.scrollY
 

@@ -18,13 +18,13 @@ export function useFitWidth(options: FitWidthOptions = {}) {
 	optionsRef.current = options
 
 	// Destructure options that should trigger a re-run when they change
-	const { target, prefer, axis, axisMin, axisMax, maxTracking, tolerance } = options
+	const { target, prefer, axis, axisMin, axisMax, maxTracking, tolerance, respectReducedMotion } = options
 
 	const run = useCallback(() => {
 		const el = ref.current
 		if (!el) return
 		applyFitWidth(el, optionsRef.current)
-	}, [target, prefer, axis, axisMin, axisMax, maxTracking, tolerance])
+	}, [target, prefer, axis, axisMin, axisMax, maxTracking, tolerance, respectReducedMotion])
 
 	useLayoutEffect(() => {
 		run()
@@ -53,6 +53,22 @@ export function useFitWidth(options: FitWidthOptions = {}) {
 	useEffect(() => {
 		document.fonts.ready.then(run)
 	}, [run])
+
+	// Re-evaluate when the user changes their motion preference at the OS level.
+	// Only active when respectReducedMotion is true — applyFitWidth handles the
+	// guard internally, so calling run() on either change direction is correct:
+	// if they disable reduced-motion the fit applies; if they enable it, the early
+	// return in applyFitWidth skips the fit (styles are not changed).
+	useEffect(() => {
+		if (!respectReducedMotion) return
+		if (typeof window === 'undefined') return
+		if (typeof window.matchMedia !== 'function') return
+
+		const mql = window.matchMedia('(prefers-reduced-motion: reduce)')
+		const handler = () => run()
+		mql.addEventListener('change', handler)
+		return () => mql.removeEventListener('change', handler)
+	}, [respectReducedMotion, run])
 
 	return ref
 }

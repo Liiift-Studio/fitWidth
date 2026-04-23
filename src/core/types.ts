@@ -36,4 +36,11 @@ export interface FitWidthOptions {
 
 	/** Convergence tolerance in pixels — search stops when gap is within this value. Default: 0.5 */
 	tolerance?: number
+
+	/**
+	 * When true, checks window.matchMedia('(prefers-reduced-motion: reduce)') before fitting.
+	 * If the user has requested reduced motion, applyFitWidth returns early without modifying
+	 * letter-spacing or font-variation-settings. Default: false.
+	 */
+	respectReducedMotion?: boolean
 }
