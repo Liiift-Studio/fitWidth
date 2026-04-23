@@ -1,6 +1,6 @@
 {
 	"name": "@liiift-studio/fitwidth",
-	"version": "1.0.11",
+	"version": "1.0.12",
 	"description": "Binary-search wdth axis and letter-spacing to fit a display headline to an exact target width",
 	"type": "module",
 	"main": "dist/index.cjs",
