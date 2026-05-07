@@ -27,7 +27,7 @@ export default function Home() {
 					<span>TypeScript</span><span>·</span><span>Zero dependencies</span><span>·</span><span>React + Vanilla JS</span>
 				</div>
 				<p className="text-base opacity-60 leading-relaxed max-w-lg">
-					CSS can&apos;t make a display headline fill its container — letter-spacing is proportional, and the wdth axis affects every character equally. Fit Width binary-searches both to converge on an exact width to within half a pixel.
+					CSS can&rsquo;t make a display headline fill its container — letter-spacing is proportional, and the wdth axis affects every character equally. Fit Width binary-searches both to converge on an exact width to within half a pixel.
 				</p>
 			</section>
 
@@ -44,8 +44,8 @@ export default function Home() {
 				<p className="text-xs uppercase tracking-widest opacity-50">How it works</p>
 				<div className="prose-grid grid grid-cols-1 sm:grid-cols-2 gap-12 text-sm leading-relaxed opacity-70">
 					<div className="flex flex-col gap-3">
-						<p className="font-semibold opacity-100 text-base">CSS can&apos;t fit a headline</p>
-						<p>letter-spacing adds a fixed amount after every character — it&apos;s proportional, not absolute. The wdth axis scales character shapes but doesn&apos;t guarantee a target width. Neither can converge on an exact measurement alone.</p>
+						<p className="font-semibold opacity-100 text-base">CSS can&rsquo;t fit a headline</p>
+						<p>letter-spacing adds a fixed amount after every character — it&rsquo;s proportional, not absolute. The wdth axis scales character shapes but doesn&rsquo;t guarantee a target width. Neither can converge on an exact measurement alone.</p>
 					</div>
 					<div className="flex flex-col gap-3">
 						<p className="font-semibold opacity-100 text-base">Binary search converges in 20 iterations</p>
@@ -53,11 +53,11 @@ export default function Home() {
 					</div>
 					<div className="flex flex-col gap-3">
 						<p className="font-semibold opacity-100 text-base">Axis first, then tracking</p>
-						<p>In <code className="text-xs font-mono">prefer=&apos;auto&apos;</code> mode, Fit Width tries the wdth axis first. If the axis range isn&apos;t enough to reach the target, letter-spacing closes the remaining gap. Either strategy can be used exclusively via <code className="text-xs font-mono">&apos;axis&apos;</code> or <code className="text-xs font-mono">&apos;tracking&apos;</code>.</p>
+						<p>In <code className="text-xs font-mono">prefer=&apos;auto&apos;</code> mode, Fit Width tries the wdth axis first. If the axis range isn&rsquo;t enough to reach the target, letter-spacing closes the remaining gap. Either strategy can be used exclusively via <code className="text-xs font-mono">&apos;axis&apos;</code> or <code className="text-xs font-mono">&apos;tracking&apos;</code>.</p>
 					</div>
 					<div className="flex flex-col gap-3">
 						<p className="font-semibold opacity-100 text-base">Idempotent — call it again on resize</p>
-						<p>Original inline styles are saved on the first call and restored before each re-fit. It&apos;s safe to call <code className="text-xs font-mono">applyFitWidth</code> repeatedly. <code className="text-xs font-mono">useFitWidth</code> and <code className="text-xs font-mono">FitWidthText</code> wire up a ResizeObserver and <code className="text-xs font-mono">document.fonts.ready</code> automatically.</p>
+						<p>Original inline styles are saved on the first call and restored before each re-fit. It&rsquo;s safe to call <code className="text-xs font-mono">applyFitWidth</code> repeatedly. <code className="text-xs font-mono">useFitWidth</code> and <code className="text-xs font-mono">FitWidthText</code> wire up a ResizeObserver and <code className="text-xs font-mono">document.fonts.ready</code> automatically.</p>
 					</div>
 				</div>
 			</section>
