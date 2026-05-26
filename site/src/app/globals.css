@@ -3,8 +3,8 @@
 @import "./base.css";
 
 :root {
-	--background: hsl(270, 55%, 10%);
-	--btn-bg: hsl(270, 35%, 18%);
+	--background: hsl(275, 55%, 9%);
+	--btn-bg: hsl(275, 33%, 17%);
 }
 
 @font-face {
