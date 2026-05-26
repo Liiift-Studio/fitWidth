@@ -45,7 +45,7 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 	const apply = useCallback(() => {
 		const el = elRef.current
 		if (!el) return
-		applyFitWidth(el, { target: 'container', prefer })
+		applyFitWidth(el, { target: 'container', prefer, axisMin: 25, axisMax: 151 })
 		if (readoutRef.current) {
 			const fvs = el.style.fontVariationSettings || '—'
 			const ls = el.style.letterSpacing || '0em'
@@ -81,15 +81,14 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 					padding: '8px 0',
 					overflow: 'hidden',
 					background: 'rgba(212,184,240,0.04)',
-					// FVS on the wrapper so React never resets it on the fitted element
-					fontVariationSettings: '"wght" 300, "opsz" 72',
 				}}
 			>
 				<h1
 					ref={elRef}
 					style={{
-						fontFamily: "var(--font-merriweather), serif",
+						fontFamily: "'Roboto Flex', sans-serif",
 						fontSize: "clamp(2.5rem, 8vw, 6rem)",
+						fontWeight: 400,
 						lineHeight: 1.1,
 						margin: 0,
 						display: 'inline-block',

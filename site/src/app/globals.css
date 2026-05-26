@@ -6,3 +6,11 @@
 	--background: hsl(280, 55%, 10%);
 	--btn-bg: hsl(280, 35%, 18%);
 }
+
+@font-face {
+	font-family: 'Roboto Flex';
+	src: url('/fonts/RobotoFlex.woff2') format('woff2');
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+}
