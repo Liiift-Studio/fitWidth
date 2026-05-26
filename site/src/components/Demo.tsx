@@ -112,7 +112,7 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 export default function Demo() {
 	const [containerPct, setContainerPct] = useState(80)
 	const [prefer, setPrefer] = useState<PreferMode>('auto')
-	const [showInternals, setShowInternals] = useState(false)
+	const [showInternals, setShowInternals] = useState(true)
 
 	// Interaction modes — mutually exclusive
 	const [cursorMode, setCursorMode] = useState(false)
