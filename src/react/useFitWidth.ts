@@ -51,7 +51,7 @@ export function useFitWidth(options: FitWidthOptions = {}) {
 	// Re-run after fonts finish loading — measurements before font-swap produce
 	// incorrect widths and the fit will be off until the real font is available
 	useEffect(() => {
-		document.fonts.ready.then(run)
+		document.fonts?.ready?.then(run)
 	}, [run])
 
 	// Re-evaluate when the user changes their motion preference at the OS level.
