@@ -225,11 +225,8 @@ export function applyFitWidth(el: HTMLElement, options: FitWidthOptions = {}): v
 		const { gap } = binarySearchAxis(el, targetWidth, baseFVS, axis, axisMin, axisMax, tolerance)
 
 		if (Math.abs(gap) > tolerance) {
-			// Axis alone didn't converge — refine with letter-spacing
-			// The axis is already applied to el at the best value found
-			const measuredAfterAxis = el.getBoundingClientRect().width
-			const remainingTarget = targetWidth - (measuredAfterAxis - targetWidth - gap) - gap
-			// Simpler: just re-search tracking from current position
+			// Axis alone didn't converge — refine with letter-spacing from the
+			// current axis position (already applied to el at the best value found)
 			binarySearchTracking(el, targetWidth, fontSize, maxTracking, tolerance)
 		}
 	}
