@@ -250,6 +250,7 @@ export default function Demo() {
 							step={1}
 							value={containerPct}
 							aria-label="Container width percentage"
+							title="Drag to resize the container — fitWidth will re-fit each headline to the new width"
 							onChange={e => setContainerPct(Number(e.target.value))}
 							onTouchStart={e => e.stopPropagation()}
 							style={{ touchAction: 'none' }}
@@ -272,6 +273,7 @@ export default function Demo() {
 								step={0.5}
 								value={angleDeg}
 								aria-label="Angular width in degrees"
+								title="Set the visual angle subtended by the text — combined with viewing distance this determines the physical pixel width fitWidth targets"
 								onChange={e => setAngleDeg(Number(e.target.value))}
 								onTouchStart={e => e.stopPropagation()}
 								style={{ touchAction: 'none' }}
@@ -289,6 +291,7 @@ export default function Demo() {
 								step={1}
 								value={viewingDistanceCm}
 								aria-label="Viewing distance in centimetres"
+								title="Set how far the reader sits from the display — longer distances mean more pixels are needed to subtend the same angle"
 								onChange={e => setViewingDistanceCm(Number(e.target.value))}
 								onTouchStart={e => e.stopPropagation()}
 								style={{ touchAction: 'none' }}
@@ -305,6 +308,11 @@ export default function Demo() {
 							key={v}
 							onClick={() => setPrefer(v)}
 							aria-pressed={prefer === v}
+							title={
+								v === 'auto'     ? 'Let fitWidth choose: uses the wdth axis first, falls back to letter-spacing when the axis range is exhausted' :
+								v === 'axis'     ? 'Fit using the variable font wdth axis only — letter-spacing is never touched' :
+								                   'Fit using letter-spacing only — wdth axis is never changed'
+							}
 							className="text-xs px-3 py-1 rounded-full border transition-opacity"
 							style={{
 								borderColor: 'currentColor',
@@ -320,6 +328,7 @@ export default function Demo() {
 				{/* Show/hide internals toggle */}
 				<button
 					onClick={() => setShowInternals(v => !v)}
+					title="Toggle the live fontVariationSettings and letter-spacing readout beneath each headline"
 					className="text-xs px-3 py-1 rounded-full border transition-opacity"
 					style={{ borderColor: 'currentColor', opacity: showInternals ? 1 : 0.4, background: showInternals ? 'var(--btn-bg)' : 'transparent' }}
 				>
