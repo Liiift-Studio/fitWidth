@@ -106,6 +106,7 @@ removeFitWidth(el)`} />
 								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">axisMax</td><td className="py-2 pr-6">125</td><td className="py-2">Maximum axis value for the binary search.</td></tr>
 								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">maxTracking</td><td className="py-2 pr-6">0.3</td><td className="py-2">Maximum absolute letter-spacing in em (clamped to ±this value).</td></tr>
 								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">tolerance</td><td className="py-2 pr-6">0.5</td><td className="py-2">Convergence tolerance in pixels — search stops when within this gap.</td></tr>
+								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">respectReducedMotion</td><td className="py-2 pr-6">false</td><td className="py-2">When true, skips fitting if the user has enabled prefers-reduced-motion.</td></tr>
 								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">as</td><td className="py-2 pr-6">&apos;h1&apos;</td><td className="py-2">HTML element to render. Accepts any valid React element type. (FitWidthText only)</td></tr>
 							</tbody>
 						</table>
