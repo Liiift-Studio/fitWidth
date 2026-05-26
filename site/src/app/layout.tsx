@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 export const metadata: Metadata = {
 	title: "Fit Width — Fill any width, exactly",
 	icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },
-	description: "Fit Width binary-searches a variable font’s wdth axis and letter-spacing to make any headline fill an exact target width. Works with React, vanilla JS, or any framework.",
+	description: "Binary-search the wdth axis and letter-spacing to make any headline fill its container exactly. Variable-font safe, resize-aware, precise to half a pixel. React + vanilla JS.",
 	keywords: ["fit width", "variable font", "wdth", "letter-spacing", "display type", "headline", "typography", "TypeScript", "npm", "react"],
 	openGraph: {
 		title: "Fit Width — Fill any width, exactly",
@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 		description: "Binary-search the wdth axis and letter-spacing to make any headline flush with its container.",
 	},
 	metadataBase: new URL("https://fitwidth.com"),
+	alternates: { canonical: "https://fitwidth.com" },
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
