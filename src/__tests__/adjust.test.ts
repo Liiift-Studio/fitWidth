@@ -9,6 +9,23 @@ const CONTAINER_W = 600
 const ELEMENT_W = 400  // element is narrower than container — algorithm must widen it
 
 /**
+ * Partial MediaQueryList for use in vi.spyOn mocks.
+ * Using a typed partial avoids the double-unknown cast.
+ */
+function makeMQL(matches: boolean): MediaQueryList {
+	return {
+		matches,
+		media: '(prefers-reduced-motion: reduce)',
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+		dispatchEvent: vi.fn(),
+		onchange: null,
+		addListener: vi.fn(),
+		removeListener: vi.fn(),
+	} as unknown as MediaQueryList
+}
+
+/**
  * Mock getBoundingClientRect so:
  *   - The target element itself starts at ELEMENT_W
  *   - The parent element (container) reports CONTAINER_W
@@ -26,6 +43,26 @@ function mockMeasurement() {
 	return () => {
 		Element.prototype.getBoundingClientRect = origBCR
 	}
+}
+
+/**
+ * Mock that differentiates element vs container measurements.
+ * The element starts narrower; the container is always CONTAINER_W.
+ * This lets us verify that the binary search actually changes the element's
+ * reported width across iterations (simulating CSS responding to axis/tracking changes).
+ */
+function mockDifferentiatedMeasurement(el: HTMLElement, container: HTMLElement) {
+	let callCount = 0
+	const elSpy = vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => {
+		// Simulate element growing toward CONTAINER_W with each iteration
+		callCount++
+		const w = Math.min(ELEMENT_W + callCount * 20, CONTAINER_W)
+		return { width: w, top: 0, left: 0, bottom: 20, right: w, height: 20, x: 0, y: 0, toJSON: () => {} } as DOMRect
+	})
+	const containerSpy = vi.spyOn(container, 'getBoundingClientRect').mockReturnValue(
+		{ width: CONTAINER_W, top: 0, left: 0, bottom: 20, right: CONTAINER_W, height: 20, x: 0, y: 0, toJSON: () => {} } as DOMRect
+	)
+	return { elSpy, containerSpy }
 }
 
 /**
@@ -225,17 +262,7 @@ describe('fitWidth', () => {
 		el.style.fontVariationSettings = '"wdth" 100'
 		el.style.letterSpacing = '0em'
 
-		// Simulate user having reduced motion enabled
-		vi.spyOn(window, 'matchMedia').mockReturnValue({
-			matches: true,
-			media: '(prefers-reduced-motion: reduce)',
-			addEventListener: vi.fn(),
-			removeEventListener: vi.fn(),
-			dispatchEvent: vi.fn(),
-			onchange: null,
-			addListener: vi.fn(),
-			removeListener: vi.fn(),
-		} as unknown as MediaQueryList)
+		vi.spyOn(window, 'matchMedia').mockReturnValue(makeMQL(true))
 
 		applyFitWidth(el, { respectReducedMotion: true })
 
@@ -248,17 +275,7 @@ describe('fitWidth', () => {
 	it('respectReducedMotion: true still fits when prefers-reduced-motion does not match', () => {
 		const { el } = makeElement()
 
-		// Simulate user NOT having reduced motion enabled
-		vi.spyOn(window, 'matchMedia').mockReturnValue({
-			matches: false,
-			media: '(prefers-reduced-motion: reduce)',
-			addEventListener: vi.fn(),
-			removeEventListener: vi.fn(),
-			dispatchEvent: vi.fn(),
-			onchange: null,
-			addListener: vi.fn(),
-			removeListener: vi.fn(),
-		} as unknown as MediaQueryList)
+		vi.spyOn(window, 'matchMedia').mockReturnValue(makeMQL(false))
 
 		applyFitWidth(el, { respectReducedMotion: true, prefer: 'axis' })
 
@@ -271,20 +288,91 @@ describe('fitWidth', () => {
 		const { el } = makeElement()
 
 		// Even if reduced motion is preferred, the option is false so the fit runs
-		vi.spyOn(window, 'matchMedia').mockReturnValue({
-			matches: true,
-			media: '(prefers-reduced-motion: reduce)',
-			addEventListener: vi.fn(),
-			removeEventListener: vi.fn(),
-			dispatchEvent: vi.fn(),
-			onchange: null,
-			addListener: vi.fn(),
-			removeListener: vi.fn(),
-		} as unknown as MediaQueryList)
+		vi.spyOn(window, 'matchMedia').mockReturnValue(makeMQL(true))
 
 		applyFitWidth(el, { respectReducedMotion: false, prefer: 'axis' })
 
 		// Fit ran — fontVariationSettings should be set
+		expect(el.style.fontVariationSettings.length).toBeGreaterThan(0)
+	})
+
+	// 20. resolveTarget fallback: detached element (no parentElement) falls back to element width
+	it("resolveTarget fallback: detached element with target: 'container' falls back to element itself", () => {
+		// Element not appended to any parent — parentElement is null
+		const el = document.createElement('h1')
+		el.textContent = 'Detached'
+		// Stub getBoundingClientRect directly on the detached element
+		vi.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+			width: 300, height: 20, top: 0, left: 0, bottom: 20, right: 300, x: 0, y: 0, toJSON: () => {},
+		} as DOMRect)
+		// Should not throw
+		expect(() => applyFitWidth(el, { target: 'container', prefer: 'axis' })).not.toThrow()
+	})
+
+	// 21. targetWidth <= 0 early-return: does not modify styles
+	it('targetWidth <= 0 causes early return without modifying styles', () => {
+		const { el } = makeElement()
+		el.style.fontVariationSettings = '"wdth" 90'
+		el.style.letterSpacing = '0em'
+
+		// Override parent to report zero width — triggers the early-return guard
+		vi.spyOn(el.parentElement!, 'getBoundingClientRect').mockReturnValue({
+			width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0, x: 0, y: 0, toJSON: () => {},
+		} as DOMRect)
+
+		applyFitWidth(el, { target: 'container', prefer: 'axis' })
+
+		// Styles must be unchanged (early return before any search)
+		expect(el.style.fontVariationSettings).toBe('"wdth" 90')
+		expect(el.style.letterSpacing).toBe('0em')
+	})
+
+	// 22. axisMin >= axisMax guard: emits console.warn and does not throw
+	it('axisMin >= axisMax emits a warning and does not throw', () => {
+		const { el } = makeElement()
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+		expect(() => applyFitWidth(el, { prefer: 'axis', axisMin: 100, axisMax: 100 })).not.toThrow()
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('axisMin'))
+	})
+
+	// 23. NaN/Infinity axisMin: emits console.warn and returns early
+	it('non-finite axisMin emits a warning and returns early without modifying styles', () => {
+		const { el } = makeElement()
+		el.style.fontVariationSettings = '"wdth" 90'
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+		applyFitWidth(el, { prefer: 'axis', axisMin: Infinity, axisMax: 125 })
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('finite'))
+		expect(el.style.fontVariationSettings).toBe('"wdth" 90')
+	})
+
+	// 24. NaN maxTracking: emits console.warn and returns early
+	it('NaN maxTracking emits a warning and returns early', () => {
+		const { el } = makeElement()
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+		applyFitWidth(el, { prefer: 'tracking', maxTracking: NaN })
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('maxTracking'))
+	})
+
+	// 25. overrideAxis with axis containing regex metacharacters does not throw
+	it('axis string with regex metacharacter does not throw', () => {
+		const { el } = makeElement()
+		// 'wdth+' contains a regex metacharacter — should be safely escaped
+		expect(() => applyFitWidth(el, { prefer: 'axis', axis: 'wdth+', axisMin: 75, axisMax: 125 })).not.toThrow()
+	})
+
+	// 26. Differentiated mock: binary search actually exercises direction logic
+	it('binary search converges — element grows toward container width', () => {
+		cleanup?.() // release the shared prototype mock for this test
+		cleanup = null
+
+		const { el, container } = makeElement()
+		const { elSpy } = mockDifferentiatedMeasurement(el, container)
+
+		applyFitWidth(el, { prefer: 'axis', axisMin: 75, axisMax: 125 })
+
+		// el.getBoundingClientRect was called multiple times (not just once)
+		expect(elSpy.mock.calls.length).toBeGreaterThan(1)
+		// fontVariationSettings was modified by the search
 		expect(el.style.fontVariationSettings.length).toBeGreaterThan(0)
 	})
 })

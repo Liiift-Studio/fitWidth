@@ -52,14 +52,27 @@ function resolveTarget(el: HTMLElement, target: FitWidthOptions['target']): numb
 }
 
 /**
+ * Escape a string for literal use inside a RegExp.
+ * Replaces all regex metacharacters with their escaped equivalents.
+ */
+function escapeRegExp(s: string): string {
+	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
  * Override a single axis value inside a font-variation-settings string,
  * preserving all other axis values. Adds the axis if not already present.
+ * Pre-compiles the pattern for reuse across multiple calls with the same axis.
  *
  * e.g. overrideAxis('"wght" 300, "opsz" 18', 'wdth', 90) → '"wght" 300, "opsz" 18, "wdth" 90'
  */
-function overrideAxis(baseFVS: string, axis: string, value: number): string {
+function makeAxisPattern(axis: string): RegExp {
+	// Use hyphen-first in character class so it is treated as a literal, not a range.
+	return new RegExp(`(["'])${escapeRegExp(axis)}\\1\\s+[-\\d.eE+]+`)
+}
+
+function overrideAxis(baseFVS: string, axis: string, value: number, pattern: RegExp): string {
 	if (!baseFVS || baseFVS === 'normal') return `"${axis}" ${value}`
-	const pattern = new RegExp(`(["'])${axis}\\1\\s+[\\d.eE+-]+`)
 	const replacement = `"${axis}" ${value}`
 	return pattern.test(baseFVS)
 		? baseFVS.replace(pattern, replacement)
@@ -70,17 +83,28 @@ function overrideAxis(baseFVS: string, axis: string, value: number): string {
  * Binary search the wdth axis to fit element width to targetWidth.
  * Returns the best axis value found after up to maxIterations steps.
  * Sets el.style.fontVariationSettings directly during the search.
+ * Accepts a pre-compiled axis pattern to avoid recompiling on every iteration.
  */
 function binarySearchAxis(
 	el: HTMLElement,
 	targetWidth: number,
 	baseFVS: string,
 	axis: string,
+	axisPattern: RegExp,
 	axisMin: number,
 	axisMax: number,
 	tolerance: number,
 	maxIterations = 20,
 ): { value: number; gap: number } {
+	// Guard: degenerate range — return midpoint immediately without looping
+	if (axisMin >= axisMax) {
+		const mid = axisMin
+		el.style.fontVariationSettings = overrideAxis(baseFVS, axis, mid, axisPattern)
+		const measured = el.getBoundingClientRect().width
+		console.warn(`[fitWidth] axisMin (${axisMin}) >= axisMax (${axisMax}); using ${mid}`)
+		return { value: mid, gap: measured - targetWidth }
+	}
+
 	let lo = axisMin
 	let hi = axisMax
 	let bestValue = (lo + hi) / 2
@@ -88,7 +112,7 @@ function binarySearchAxis(
 
 	for (let i = 0; i < maxIterations; i++) {
 		const mid = (lo + hi) / 2
-		el.style.fontVariationSettings = overrideAxis(baseFVS, axis, mid)
+		el.style.fontVariationSettings = overrideAxis(baseFVS, axis, mid, axisPattern)
 		const measured = el.getBoundingClientRect().width
 		const gap = measured - targetWidth
 
@@ -99,7 +123,7 @@ function binarySearchAxis(
 
 		if (Math.abs(gap) <= tolerance) break
 
-		// Higher axis value → wider text
+		// Higher axis value → wider text (assumes standard width-expanding axis like wdth)
 		if (gap < 0) {
 			// Text is too narrow — increase axis value
 			lo = mid
@@ -116,6 +140,7 @@ function binarySearchAxis(
  * Binary search letter-spacing (in em) to close a remaining width gap.
  * Sets el.style.letterSpacing directly during the search.
  * Clamps result to ±maxTracking em.
+ * Returns the best value and gap found, consistent with binarySearchAxis.
  */
 function binarySearchTracking(
 	el: HTMLElement,
@@ -124,7 +149,15 @@ function binarySearchTracking(
 	maxTracking: number,
 	tolerance: number,
 	maxIterations = 20,
-): void {
+): { value: number; gap: number } {
+	// When fontSize is not a positive finite number we cannot produce em values —
+	// leave letter-spacing at 0 and report the current gap without looping.
+	if (!(fontSize > 0)) {
+		el.style.letterSpacing = '0em'
+		const measured = el.getBoundingClientRect().width
+		return { value: 0, gap: measured - targetWidth }
+	}
+
 	let lo = -maxTracking
 	let hi = maxTracking
 	let bestValue = 0
@@ -132,7 +165,7 @@ function binarySearchTracking(
 
 	for (let i = 0; i < maxIterations; i++) {
 		const mid = (lo + hi) / 2
-		el.style.letterSpacing = fontSize > 0 ? `${mid}em` : '0em'
+		el.style.letterSpacing = `${mid}em`
 		const measured = el.getBoundingClientRect().width
 		const gap = measured - targetWidth
 
@@ -152,7 +185,8 @@ function binarySearchTracking(
 	}
 
 	// Apply best found value
-	el.style.letterSpacing = fontSize > 0 ? `${bestValue}em` : '0em'
+	el.style.letterSpacing = `${bestValue}em`
+	return { value: bestValue, gap: bestGap }
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -191,6 +225,19 @@ export function applyFitWidth(el: HTMLElement, options: FitWidthOptions = {}): v
 	const maxTracking = options.maxTracking ?? DEFAULTS.maxTracking
 	const tolerance = options.tolerance ?? DEFAULTS.tolerance
 
+	// Validate numeric options — guard against NaN/Infinity/swapped ranges
+	if (!isFinite(axisMin) || !isFinite(axisMax)) {
+		console.warn(`[fitWidth] axisMin and axisMax must be finite numbers; got ${axisMin}, ${axisMax}`)
+		return
+	}
+	if (!isFinite(maxTracking) || maxTracking < 0) {
+		console.warn(`[fitWidth] maxTracking must be a finite non-negative number; got ${maxTracking}`)
+		return
+	}
+
+	// Pre-compile the axis regex pattern once for this call (reused across all iterations)
+	const axisPattern = makeAxisPattern(axis)
+
 	// Save original inline styles on first call (idempotent for subsequent calls)
 	if (!savedStyles.has(el)) {
 		savedStyles.set(el, {
@@ -209,9 +256,10 @@ export function applyFitWidth(el: HTMLElement, options: FitWidthOptions = {}): v
 
 	if (targetWidth <= 0) return
 
-	// Read the base font-variation-settings from computed style (inherits parent axis values)
-	const baseFVS = getComputedStyle(el).fontVariationSettings
-	const fontSize = parseFloat(getComputedStyle(el).fontSize)
+	// Batch computed-style reads before entering the binary search loops
+	const cs = getComputedStyle(el)
+	const baseFVS = cs.fontVariationSettings
+	const fontSize = parseFloat(cs.fontSize)
 
 	if (prefer === 'tracking') {
 		// Tracking-only mode: binary search letter-spacing, leave font-variation-settings alone
@@ -219,10 +267,10 @@ export function applyFitWidth(el: HTMLElement, options: FitWidthOptions = {}): v
 	} else if (prefer === 'axis') {
 		// Axis-only mode: zero out letter-spacing first, then binary search the axis
 		el.style.letterSpacing = '0'
-		binarySearchAxis(el, targetWidth, baseFVS, axis, axisMin, axisMax, tolerance)
+		binarySearchAxis(el, targetWidth, baseFVS, axis, axisPattern, axisMin, axisMax, tolerance)
 	} else {
 		// Auto mode: try axis first, then use letter-spacing to close any remaining gap
-		const { gap } = binarySearchAxis(el, targetWidth, baseFVS, axis, axisMin, axisMax, tolerance)
+		const { gap } = binarySearchAxis(el, targetWidth, baseFVS, axis, axisPattern, axisMin, axisMax, tolerance)
 
 		if (Math.abs(gap) > tolerance) {
 			// Axis alone didn't converge — refine with letter-spacing from the

@@ -93,7 +93,7 @@ const opts: FitWidthOptions = {
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `target` | `'container'` | Width to fill. `'container'` fills the parent element's clientWidth. Pass a `number` for an exact pixel target. Pass an `HTMLElement` to match the rendered width of another element |
+| `target` | `'container'` | Width to fill. `'container'` fills the parent element's `getBoundingClientRect().width` (a sub-pixel float, CSS-transform–aware). Pass a `number` for an exact pixel target. Pass an `HTMLElement` to match the rendered width of another element |
 | `prefer` | `'auto'` | Strategy to use. `'auto'` tries the `wdth` axis first, then refines with `letter-spacing` if needed. `'axis'` uses the axis only (sets `letter-spacing` to 0 first). `'tracking'` uses `letter-spacing` only and leaves `font-variation-settings` unchanged |
 | `axis` | `'wdth'` | Variable font axis tag to adjust when `prefer` is `'auto'` or `'axis'`. Any four-character OpenType axis tag is valid (e.g. `'wdth'`, `'wght'`, `'XTRA'`) |
 | `axisMin` | `75` | Minimum axis value for the binary search |
