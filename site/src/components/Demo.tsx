@@ -1,7 +1,7 @@
 "use client"
 
 // Interactive demo: drag a width slider (or move cursor/tilt/angular) to see headlines fill their container exactly
-import { useState, useEffect, useCallback, useLayoutEffect, useRef } from "react"
+import { useState, useEffect, useCallback, useLayoutEffect, useRef, useMemo } from "react"
 import { applyFitWidth } from "@liiift-studio/fitwidth"
 import type { FitWidthOptions } from "@liiift-studio/fitwidth"
 
@@ -38,7 +38,7 @@ function GyroIcon() {
  */
 function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: string; containerPct: number; prefer: PreferMode; showInternals: boolean }) {
 	const containerRef = useRef<HTMLDivElement>(null)
-	const elRef = useRef<HTMLHeadingElement>(null)
+	const elRef = useRef<HTMLParagraphElement>(null)
 	// Ref-based readout avoids state re-renders that would reset FVS via React style prop
 	const readoutRef = useRef<HTMLSpanElement>(null)
 
@@ -64,10 +64,13 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 		return () => ro.disconnect()
 	}, [apply])
 
-	// Re-run after fonts load — measurements before font-swap produce incorrect widths
+	// Re-run after fonts load once on mount — ResizeObserver handles subsequent re-fits.
+	// Deps are intentionally [] to avoid re-subscribing every time apply reference changes;
+	// document.fonts.ready stays resolved so re-subscribing with [apply] causes double-applies.
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => {
 		document.fonts.ready.then(apply)
-	}, [apply])
+	}, [])
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -83,8 +86,9 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 					background: 'rgba(212,184,240,0.04)',
 				}}
 			>
-				<h1
+				<p
 					ref={elRef}
+					aria-hidden="true"
 					style={{
 						fontFamily: "'Roboto Flex', sans-serif",
 						fontSize: "clamp(2.5rem, 8vw, 6rem)",
@@ -96,12 +100,12 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 					}}
 				>
 					{text}
-				</h1>
+				</p>
 			</div>
 			{/* Live readout updated via ref to avoid state-driven re-renders */}
 			{showInternals && (
 				<div className="flex gap-6 text-xs opacity-40 font-mono tabular-nums">
-					<span ref={readoutRef}>fvs: —  ls: 0em</span>
+					<span ref={readoutRef} aria-live="polite" aria-atomic="true">fvs: —  ls: 0em</span>
 				</div>
 			)}
 		</div>
@@ -125,10 +129,14 @@ export default function Demo() {
 
 	// Ref to the outer wrapper to measure actual container pixel width for angular computation
 	const demoRef = useRef<HTMLDivElement>(null)
+	// Measured pixel width of the demo wrapper — kept in state so angular pct recomputes on resize
+	const [demoWidth, setDemoWidth] = useState(800)
 
 	// Gyro-driven container pct — kept separate from slider state so slider value props
 	// never change during gyro mode (which would cause mobile to scroll to the input)
 	const [gyroContainerPct, setGyroContainerPct] = useState(80)
+	// Permission denial feedback for iOS gyro
+	const [gyroDenied, setGyroDenied] = useState(false)
 
 	// Detected capabilities — resolved client-side after mount
 	const [showCursor, setShowCursor] = useState(false)
@@ -141,13 +149,28 @@ export default function Demo() {
 		setShowGyro(isTouch && 'DeviceOrientationEvent' in window)
 	}, [])
 
-	// Compute pixel target from angular parameters: 2 * distance_mm * tan(angle/2) * (96px/25.4mm)
-	const angularPxTarget = 2 * (viewingDistanceCm * 10) * Math.tan((angleDeg / 2) * (Math.PI / 180)) * (96 / 25.4)
-	const angularPxRounded = Math.round(angularPxTarget)
+	// Track demo wrapper width for accurate angular pct computation
+	useEffect(() => {
+		const el = demoRef.current
+		if (!el || typeof ResizeObserver === 'undefined') return
+		const ro = new ResizeObserver(entries => {
+			const w = entries[0]?.contentRect.width
+			if (w) setDemoWidth(w)
+		})
+		ro.observe(el)
+		// Set initial width once mounted
+		setDemoWidth(el.getBoundingClientRect().width || 800)
+		return () => ro.disconnect()
+	}, [])
 
-	// Compute effective container pct from angular pixel target relative to actual container width
-	const angularContainerWidth = demoRef.current?.getBoundingClientRect().width ?? 800
-	const angularContainerPct = Math.min(100, Math.max(1, (angularPxTarget / angularContainerWidth) * 100))
+	// Compute pixel target from angular parameters: 2 * distance_mm * tan(angle/2) * (96px/25.4mm)
+	const { angularPxRounded, angularContainerPct } = useMemo(() => {
+		const pxTarget = 2 * (viewingDistanceCm * 10) * Math.tan((angleDeg / 2) * (Math.PI / 180)) * (96 / 25.4)
+		return {
+			angularPxRounded: Math.round(pxTarget),
+			angularContainerPct: Math.min(100, Math.max(1, (pxTarget / demoWidth) * 100)),
+		}
+	}, [viewingDistanceCm, angleDeg, demoWidth])
 
 	// Effective container pct — priority: gyro > angular > slider
 	const effectiveContainerPct = gyroMode
@@ -198,39 +221,48 @@ export default function Demo() {
 	}, [gyroMode])
 
 	// Toggle cursor mode — turns off gyro and angular if active
-	const toggleCursor = () => {
+	const toggleCursor = useCallback(() => {
 		setGyroMode(false)
 		setAngularMode(false)
+		setGyroDenied(false)
 		setCursorMode(v => !v)
-	}
+	}, [])
 
 	// Toggle gyro mode — requests iOS permission if needed, turns off cursor and angular if active
-	const toggleGyro = async () => {
+	const toggleGyro = useCallback(async () => {
 		if (gyroMode) {
 			setGyroMode(false)
+			setGyroDenied(false)
 			return
 		}
 		setCursorMode(false)
 		setAngularMode(false)
+		setGyroDenied(false)
 		const DOE = DeviceOrientationEvent as typeof DeviceOrientationEvent & {
 			requestPermission?: () => Promise<PermissionState>
 		}
 		if (typeof DOE.requestPermission === 'function') {
 			const permission = await DOE.requestPermission()
-			if (permission === 'granted') setGyroMode(true)
+			if (permission === 'granted') {
+				setGyroMode(true)
+			} else {
+				setGyroDenied(true)
+			}
 		} else {
 			setGyroMode(true)
 		}
-	}
+	}, [gyroMode])
 
 	// Toggle angular mode — turns off cursor and gyro if active
-	const toggleAngular = () => {
+	const toggleAngular = useCallback(() => {
 		setCursorMode(false)
 		setGyroMode(false)
+		setGyroDenied(false)
 		setAngularMode(v => !v)
-	}
+	}, [])
 
-	const activeMode = cursorMode || gyroMode
+	// activeMode: any non-default interaction mode is active
+	const activeMode = cursorMode || gyroMode || angularMode
 
 	return (
 		<div ref={demoRef} className="w-full flex flex-col gap-8">
@@ -241,7 +273,8 @@ export default function Demo() {
 					<div className="flex flex-col gap-1 min-w-48 flex-1">
 						<div className="flex justify-between text-xs uppercase tracking-widest opacity-50">
 							<span>Container Width</span>
-							<span className="tabular-nums">{containerPct}%</span>
+							{/* Show effective pct so label matches what headlines are actually fitted to */}
+							<span className="tabular-nums">{Math.round(effectiveContainerPct)}%</span>
 						</div>
 						<input
 							type="range"
@@ -250,10 +283,12 @@ export default function Demo() {
 							step={1}
 							value={containerPct}
 							aria-label="Container width percentage"
-							title="Drag to resize the container — fitWidth will re-fit each headline to the new width"
+							aria-valuetext={`${Math.round(effectiveContainerPct)} percent`}
+							title={cursorMode || gyroMode ? "Disabled while cursor/gyro mode is active" : "Drag to resize the container — fitWidth will re-fit each headline to the new width"}
+							disabled={cursorMode || gyroMode}
 							onChange={e => setContainerPct(Number(e.target.value))}
 							onTouchStart={e => e.stopPropagation()}
-							style={{ touchAction: 'none' }}
+							style={{ touchAction: 'none', opacity: (cursorMode || gyroMode) ? 0.3 : undefined }}
 						/>
 					</div>
 				)}
@@ -273,6 +308,7 @@ export default function Demo() {
 								step={0.5}
 								value={angleDeg}
 								aria-label="Angular width in degrees"
+								aria-valuetext={`${angleDeg} degrees, approximately ${angularPxRounded} pixels`}
 								title="Set the visual angle subtended by the text — combined with viewing distance this determines the physical pixel width fitWidth targets"
 								onChange={e => setAngleDeg(Number(e.target.value))}
 								onTouchStart={e => e.stopPropagation()}
@@ -291,6 +327,7 @@ export default function Demo() {
 								step={1}
 								value={viewingDistanceCm}
 								aria-label="Viewing distance in centimetres"
+								aria-valuetext={`${viewingDistanceCm} centimetres`}
 								title="Set how far the reader sits from the display — longer distances mean more pixels are needed to subtend the same angle"
 								onChange={e => setViewingDistanceCm(Number(e.target.value))}
 								onTouchStart={e => e.stopPropagation()}
@@ -328,6 +365,7 @@ export default function Demo() {
 				{/* Show/hide internals toggle */}
 				<button
 					onClick={() => setShowInternals(v => !v)}
+					aria-pressed={showInternals}
 					title="Toggle the live fontVariationSettings and letter-spacing readout beneath each headline"
 					className="text-xs px-3 py-1 rounded-full border transition-opacity"
 					style={{ borderColor: 'currentColor', opacity: showInternals ? 1 : 0.4, background: showInternals ? 'var(--btn-bg)' : 'transparent' }}
@@ -341,6 +379,7 @@ export default function Demo() {
 				{showCursor && (
 					<button
 						onClick={toggleCursor}
+						aria-pressed={cursorMode}
 						title="Move cursor left/right to control container width"
 						className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border transition-all"
 						style={{
@@ -356,6 +395,7 @@ export default function Demo() {
 				{showGyro && (
 					<button
 						onClick={toggleGyro}
+						aria-pressed={gyroMode}
 						title="Tilt left/right to control container width"
 						className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border transition-all"
 						style={{
@@ -370,7 +410,8 @@ export default function Demo() {
 				)}
 				<button
 					onClick={toggleAngular}
-					title="Set container width by angular degrees (smart glasses / AR context)"
+					aria-pressed={angularMode}
+					title="Angular mode: replaces the width slider with angular (degrees) and viewing-distance controls. The container width is derived from a visual angle rather than a percentage."
 					className="text-xs px-3 py-1 rounded-full border transition-all"
 					style={{
 						borderColor: 'currentColor',
@@ -380,11 +421,23 @@ export default function Demo() {
 				>
 					Angular
 				</button>
-				{activeMode && (
-					<p className="text-xs opacity-50 italic">
-						{cursorMode ? 'Move cursor left/right to adjust container width. Press Esc to exit.' : 'Tilt left/right to adjust container width.'}
-					</p>
-				)}
+				{/* aria-live region so screen readers hear the hint when a mode activates */}
+				<div aria-live="polite" aria-atomic="true" className="contents">
+					{activeMode && (
+						<p className="text-xs opacity-50 italic">
+							{cursorMode
+								? 'Move cursor left/right to adjust container width. Press Esc to exit.'
+								: gyroMode
+									? 'Tilt left/right to adjust container width.'
+									: 'Angular mode active — width is set by degrees and viewing distance.'}
+						</p>
+					)}
+					{gyroDenied && (
+						<p className="text-xs opacity-70 italic" style={{ color: 'rgb(255 150 150)' }}>
+							Motion permission denied. Enable motion access in your device settings to use tilt mode.
+						</p>
+					)}
+				</div>
 			</div>
 
 			{/* Headlines */}

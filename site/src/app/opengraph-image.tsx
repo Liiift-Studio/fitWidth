@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-export const alt = 'Fit Width — Fill any width, exactly'
+export const alt = 'Fit Width — flush every time.'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -31,6 +31,6 @@ export default async function Image() {
 				</div>
 			</div>
 		),
-		{ ...size, fonts: [{ name: 'Inter', data: interLight, style: 'normal', weight: 300 }] },
+		{ ...size, fonts: [{ name: 'Inter', data: interLight as unknown as ArrayBuffer, style: 'normal', weight: 300 }] },
 	)
 }

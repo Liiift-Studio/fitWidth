@@ -5,19 +5,31 @@ import ToolDirectory from "@/components/ToolDirectory"
 import { version } from "../../../package.json"
 import { version as siteVersion } from "../../package.json"
 import SiteFooter from "../components/SiteFooter"
-import { MagnetChar } from "@liiift-studio/magnettype"
+
+/** JSON-LD structured data for SoftwareApplication rich results */
+const jsonLd = {
+	"@context": "https://schema.org",
+	"@type": "SoftwareApplication",
+	name: "Fit Width",
+	description: "Binary-search the wdth axis and letter-spacing to make any headline fill its container exactly.",
+	url: "https://fitwidth.com",
+	applicationCategory: "DeveloperApplication",
+	operatingSystem: "Any",
+	offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+}
 
 export default function Home() {
 	return (
 		<main className="flex flex-col items-center px-6 py-20 gap-24">
+			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
 			{/* Hero */}
 			<section className="w-full max-w-2xl lg:max-w-5xl flex flex-col gap-6">
 				<div className="flex flex-col gap-2">
 					<p className="text-xs uppercase tracking-widest opacity-50">fitwidth</p>
 					<h1 className="text-4xl lg:text-8xl xl:text-9xl" style={{ fontFamily: "var(--font-merriweather), serif", fontVariationSettings: '"wght" 300, "opsz" 144', lineHeight: "1.05em" }}>
-						<MagnetChar as="span" minWeight={300} maxWeight={800} spreadRadius={220} fixedAxes={{ opsz: 144 }}>Fill any width,</MagnetChar><br />
-						<MagnetChar as="span" minWeight={300} maxWeight={800} spreadRadius={220} fixedAxes={{ opsz: 144 }} style={{ opacity: 0.5, fontStyle: "italic" }}>exactly.</MagnetChar>
+						Fill any width,<br />
+						<span style={{ opacity: 0.5, fontStyle: "italic" }}>exactly.</span>
 					</h1>
 				</div>
 				<div className="flex items-center gap-4">
@@ -34,7 +46,7 @@ export default function Home() {
 
 			{/* Demo */}
 			<section className="w-full max-w-2xl lg:max-w-5xl flex flex-col gap-4">
-				<p className="text-xs uppercase tracking-widest opacity-50">Live demo — drag the slider</p>
+				<h2 className="text-xs uppercase tracking-widest opacity-50">Live demo — drag the slider</h2>
 				<div className="rounded-xl -mx-8 px-8 py-8" style={{ background: "rgba(0,0,0,0.25)", overflow: 'hidden' }}>
 					<Demo />
 				</div>
@@ -42,7 +54,7 @@ export default function Home() {
 
 			{/* Explanation */}
 			<section className="w-full max-w-2xl lg:max-w-5xl flex flex-col gap-6">
-				<p className="text-xs uppercase tracking-widest opacity-50">How it works</p>
+				<h2 className="text-xs uppercase tracking-widest opacity-50">How it works</h2>
 				<div className="prose-grid grid grid-cols-1 sm:grid-cols-2 gap-12 text-sm leading-relaxed opacity-70">
 					<div className="flex flex-col gap-3">
 						<p className="font-semibold opacity-100 text-base">CSS can&rsquo;t fit a headline</p>
@@ -50,7 +62,7 @@ export default function Home() {
 					</div>
 					<div className="flex flex-col gap-3">
 						<p className="font-semibold opacity-100 text-base">Binary search converges in 20 iterations</p>
-						<p>Fit Width uses a classic binary search: measure the element, compare to target, move the midpoint. Within 15–20 iterations it converges to within the tolerance (default 0.5 px). The cost is negligible — no reflow until the final write.</p>
+						<p>Fit Width uses a classic binary search: measure the element, compare to target, move the midpoint. Within 15–20 iterations it converges to within the tolerance (default 0.5 px). The cost is low — no innerHTML rewrite, just style reads and writes until convergence.</p>
 					</div>
 					<div className="flex flex-col gap-3">
 						<p className="font-semibold opacity-100 text-base">Axis first, then tracking</p>
@@ -66,7 +78,7 @@ export default function Home() {
 			{/* Usage */}
 			<section className="w-full max-w-2xl lg:max-w-5xl flex flex-col gap-6">
 				<div className="flex items-baseline gap-4">
-					<p className="text-xs uppercase tracking-widest opacity-50">Usage</p>
+					<h2 className="text-xs uppercase tracking-widest opacity-50">Usage</h2>
 					<p className="text-xs opacity-50 tracking-wide">TypeScript + React · Vanilla JS</p>
 				</div>
 				<div className="flex flex-col gap-8 text-sm">
@@ -97,10 +109,10 @@ removeFitWidth(el)`} />
 					</div>
 					<div className="flex flex-col gap-3">
 						<p className="opacity-50">Options</p>
-						<table className="w-full text-xs">
+						<table className="w-full text-xs" aria-label="FitWidth options reference">
 							<thead><tr className="opacity-50 text-left"><th className="pb-2 pr-6 font-normal">Option</th><th className="pb-2 pr-6 font-normal">Default</th><th className="pb-2 font-normal">Description</th></tr></thead>
 							<tbody className="opacity-70">
-								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">target</td><td className="py-2 pr-6">&apos;container&apos;</td><td className="py-2">Width to fill: <code className="font-mono">&apos;container&apos;</code> (parent clientWidth), a pixel number, or an HTMLElement.</td></tr>
+								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">target</td><td className="py-2 pr-6">&apos;container&apos;</td><td className="py-2">Width to fill: <code className="font-mono">&apos;container&apos;</code> (parent&apos;s rendered width via getBoundingClientRect), a pixel number, or an HTMLElement.</td></tr>
 								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">prefer</td><td className="py-2 pr-6">&apos;auto&apos;</td><td className="py-2"><code className="font-mono">&apos;auto&apos;</code> — wdth axis first, then letter-spacing. <code className="font-mono">&apos;axis&apos;</code> — axis only. <code className="font-mono">&apos;tracking&apos;</code> — letter-spacing only.</td></tr>
 								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">axis</td><td className="py-2 pr-6">&apos;wdth&apos;</td><td className="py-2">Variable font axis tag to binary-search.</td></tr>
 								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">axisMin</td><td className="py-2 pr-6">75</td><td className="py-2">Minimum axis value for the binary search.</td></tr>
@@ -108,9 +120,9 @@ removeFitWidth(el)`} />
 								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">maxTracking</td><td className="py-2 pr-6">0.3</td><td className="py-2">Maximum absolute letter-spacing in em (clamped to ±this value).</td></tr>
 								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">tolerance</td><td className="py-2 pr-6">0.5</td><td className="py-2">Convergence tolerance in pixels — search stops when within this gap.</td></tr>
 								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">respectReducedMotion</td><td className="py-2 pr-6">false</td><td className="py-2">When true, skips fitting if the user has enabled prefers-reduced-motion.</td></tr>
-								<tr className="border-t border-white/10 hover:bg-white/5 transition-colors"><td className="py-2 pr-6 font-mono">as</td><td className="py-2 pr-6">&apos;h1&apos;</td><td className="py-2">HTML element to render. Accepts any valid React element type. (FitWidthText only)</td></tr>
 							</tbody>
 						</table>
+						<p className="text-xs opacity-50 mt-3"><code className="font-mono">FitWidthText</code> only: <code className="font-mono">as</code> (default <code className="font-mono">&apos;h1&apos;</code>) — HTML element to render. Accepts any valid React element type.</p>
 					</div>
 				</div>
 			</section>
