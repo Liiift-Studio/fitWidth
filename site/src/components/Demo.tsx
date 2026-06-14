@@ -104,7 +104,7 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 			</div>
 			{/* Live readout updated via ref to avoid state-driven re-renders */}
 			{showInternals && (
-				<div className="flex gap-6 text-xs opacity-40 font-mono tabular-nums">
+				<div className="flex gap-6 text-xs text-muted font-mono tabular-nums">
 					<span ref={readoutRef} aria-live="polite" aria-atomic="true">fvs: —  ls: 0em</span>
 				</div>
 			)}
@@ -271,7 +271,7 @@ export default function Demo() {
 				{/* Container width slider — hidden in angular mode */}
 				{!angularMode && (
 					<div className="flex flex-col gap-1 min-w-48 flex-1">
-						<div className="flex justify-between text-xs uppercase tracking-widest opacity-50">
+						<div className="flex justify-between text-xs uppercase tracking-[0.18em] font-medium text-muted">
 							<span>Container Width</span>
 							{/* Show effective pct so label matches what headlines are actually fitted to */}
 							<span className="tabular-nums">{Math.round(effectiveContainerPct)}%</span>
@@ -297,9 +297,9 @@ export default function Demo() {
 				{angularMode && (
 					<>
 						<div className="flex flex-col gap-1 min-w-48 flex-1">
-							<div className="flex justify-between text-xs uppercase tracking-widest opacity-50">
+							<div className="flex justify-between text-xs uppercase tracking-[0.18em] font-medium text-muted">
 								<span>Angular Width</span>
-								<span className="tabular-nums">{angleDeg}° <span className="opacity-70">(≈ {angularPxRounded}px)</span></span>
+								<span className="tabular-nums">{angleDeg}° <span style={{ opacity: 0.7 }}>(≈ {angularPxRounded}px)</span></span>
 							</div>
 							<input
 								type="range"
@@ -316,7 +316,7 @@ export default function Demo() {
 							/>
 						</div>
 						<div className="flex flex-col gap-1 min-w-48 flex-1">
-							<div className="flex justify-between text-xs uppercase tracking-widest opacity-50">
+							<div className="flex justify-between text-xs uppercase tracking-[0.18em] font-medium text-muted">
 								<span>Viewing Distance</span>
 								<span className="tabular-nums">{viewingDistanceCm}cm</span>
 							</div>
@@ -339,7 +339,7 @@ export default function Demo() {
 
 				{/* Prefer mode toggle */}
 				<div className="flex items-center gap-2 flex-shrink-0">
-					<span className="text-xs uppercase tracking-widest opacity-50">Prefer</span>
+					<span className="text-xs uppercase tracking-[0.18em] font-medium text-muted">Prefer</span>
 					{(['auto', 'axis', 'tracking'] as const).map(v => (
 						<button
 							key={v}
@@ -424,7 +424,7 @@ export default function Demo() {
 				{/* aria-live region so screen readers hear the hint when a mode activates */}
 				<div aria-live="polite" aria-atomic="true" className="contents">
 					{activeMode && (
-						<p className="text-xs opacity-50 italic">
+						<p className="text-xs text-muted italic">
 							{cursorMode
 								? 'Move cursor left/right to adjust container width. Press Esc to exit.'
 								: gyroMode
@@ -453,7 +453,7 @@ export default function Demo() {
 				))}
 			</div>
 
-			<p className="text-xs opacity-50 italic" style={{ lineHeight: "1.8" }}>
+			<p className="text-xs text-muted italic" style={{ lineHeight: "1.8" }}>
 				Each headline fills its container exactly — to within half a pixel. Drag the slider to resize the container. Switch prefer mode to see the wdth axis or letter-spacing used in isolation. Smartwatches and fixed-width displays make this non-negotiable — a headline that almost fills a round watch face looks broken; one that fills it exactly looks intentional.
 			</p>
 		</div>
