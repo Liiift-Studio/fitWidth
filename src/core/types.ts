@@ -5,7 +5,7 @@ export interface FitWidthOptions {
 	/**
 	 * Target width to fill. Default: 'container'
 	 *
-	 * - **'container'** — fill the parent element's clientWidth
+	 * - **'container'** — fill the parent element's getBoundingClientRect().width (sub-pixel float, transform-aware)
 	 * - **number** — exact pixel target
 	 * - **HTMLElement** — match the rendered width of another element
 	 */

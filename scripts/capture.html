@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<!--
+  README Studio capture page for fitWidth.
+  Loads the real Roboto Flex variable font and the built applyFitWidth from ../dist,
+  then renders reproducible before/after scenes that the sibling capture.mjs screenshots.
+  Each .scene element is exported to assets/<id>.png.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+	/* Variable font with a real wdth axis — same file the live site ships */
+	@font-face {
+		font-family: 'Roboto Flex';
+		src: url('/site/public/fonts/RobotoFlex.woff2') format('woff2');
+		font-weight: 100 900;
+		font-style: normal;
+		font-display: block;
+	}
+
+	:root {
+		/* Mirror the live fitwidth.com theme (oklch indigo) */
+		--bg: oklch(0.17 0.0993 275);
+		--fg: oklch(0.97 0.008 275);
+		--muted: oklch(0.78 0.025 275);
+		--accent: rgba(212, 184, 240, 0.9);
+		--border: rgba(212, 184, 240, 0.28);
+		--panel: rgba(212, 184, 240, 0.05);
+	}
+
+	html, body { margin: 0; padding: 0; background: transparent; }
+
+	body {
+		font-family: ui-sans-serif, system-ui, sans-serif;
+		color: var(--fg);
+		-webkit-font-smoothing: antialiased;
+	}
+
+	/* Each scene is a self-contained card on the themed background */
+	.scene {
+		background: var(--bg);
+		border-radius: 18px;
+		padding: 44px 48px;
+		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		gap: 26px;
+	}
+
+	.scene-title {
+		font-size: 13px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		font-weight: 600;
+		color: var(--muted);
+		margin: 0;
+	}
+
+	.row { display: flex; flex-direction: column; gap: 8px; }
+
+	.row-label {
+		font-size: 12px;
+		letter-spacing: 0.04em;
+		color: var(--muted);
+		font-family: ui-monospace, monospace;
+	}
+
+	/* The container whose width the headline must fill exactly */
+	.box {
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--panel);
+		padding: 10px 0;
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+
+	/* The headline element — display-block so its own width is measurable */
+	.headline {
+		font-family: 'Roboto Flex', sans-serif;
+		font-weight: 400;
+		font-size: 72px;
+		line-height: 1.05;
+		margin: 0;
+		display: inline-block;
+		white-space: nowrap;
+		color: var(--fg);
+	}
+
+	/* "before" headline: no fit applied — sits at default width, ragged right edge */
+	.ragged { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- HERO: same word, same font-size, two container widths — both filled to the edge -->
+<div class="scene" id="hero" style="width: 920px;">
+	<p class="scene-title">fitWidth · one word, any width, exact fill</p>
+	<div class="row">
+		<span class="row-label">container 100%</span>
+		<div class="box" style="width: 100%;"><p class="headline" data-fit="auto">Typography</p></div>
+	</div>
+	<div class="row">
+		<span class="row-label">container 64%</span>
+		<div class="box" style="width: 64%;"><p class="headline" data-fit="auto">Typography</p></div>
+	</div>
+	<div class="row">
+		<span class="row-label">container 40%</span>
+		<div class="box" style="width: 40%;"><p class="headline" data-fit="auto">Typography</p></div>
+	</div>
+</div>
+
+<!-- BEFORE / AFTER: identical container, with and without fitWidth -->
+<div class="scene" id="before-after" style="width: 920px;">
+	<p class="scene-title">Before → After · same container</p>
+	<div class="row">
+		<span class="row-label">CSS alone — ragged, under-fills the box</span>
+		<div class="box" style="width: 100%;"><p class="headline ragged">Display Type</p></div>
+	</div>
+	<div class="row">
+		<span class="row-label">applyFitWidth(el) — flush to both edges</span>
+		<div class="box" style="width: 100%;"><p class="headline" data-fit="auto">Display Type</p></div>
+	</div>
+</div>
+
+<!-- PREFER MODES: same target width, three strategies -->
+<div class="scene" id="prefer-modes" style="width: 920px;">
+	<p class="scene-title">prefer · axis vs tracking vs auto</p>
+	<div class="row">
+		<span class="row-label">prefer: 'axis' — wdth axis widens the glyphs</span>
+		<div class="box" style="width: 62%;"><p class="headline" data-fit="axis">Headline</p></div>
+	</div>
+	<div class="row">
+		<span class="row-label">prefer: 'tracking' — letter-spacing widens the gaps</span>
+		<div class="box" style="width: 62%;"><p class="headline" data-fit="tracking">Headline</p></div>
+	</div>
+	<div class="row">
+		<span class="row-label">prefer: 'auto' — axis first, then tracking</span>
+		<div class="box" style="width: 62%;"><p class="headline" data-fit="auto">Headline</p></div>
+	</div>
+</div>
+
+<script type="module">
+	import { applyFitWidth } from '/dist/index.js'
+
+	// Run the real algorithm once fonts are ready, matching the live demo's axis range.
+	window.__ready = (async () => {
+		await document.fonts.ready
+		// Force the variable font to be active before measuring
+		await document.fonts.load('72px "Roboto Flex"')
+		await new Promise(r => requestAnimationFrame(r))
+		for (const el of document.querySelectorAll('[data-fit]')) {
+			const prefer = el.getAttribute('data-fit')
+			applyFitWidth(el, { target: 'container', prefer, axisMin: 25, axisMax: 151 })
+		}
+		// settle a frame so layout reflects the final styles
+		await new Promise(r => requestAnimationFrame(r))
+	})()
+</script>
+</body>
+</html>
