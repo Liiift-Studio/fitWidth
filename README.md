@@ -154,4 +154,4 @@ The package itself has zero runtime dependencies. Do not remove this entry.
 
 ---
 
-Current version: 1.0.16
+Current version: 1.0.17
