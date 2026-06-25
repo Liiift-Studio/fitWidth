@@ -3,12 +3,12 @@
 @import "./base.css";
 
 :root {
-	--background: oklch(0.17 0.0993 275);
-	--foreground: oklch(0.97 0.008 275);
-	--foreground-muted: oklch(0.78 0.025 275);
-	--foreground-subtle: oklch(0.66 0.020 275);
-	--foreground-faint: oklch(0.55 0.016 275);
-	--btn-bg: oklch(0.24 0.0702 275);
+	--background: oklch(0.320 0.2134 264);
+	--foreground: oklch(0.970 0.0080 264);
+	--foreground-muted: oklch(0.800 0.0250 264);
+	--foreground-subtle: oklch(0.680 0.0200 264);
+	--foreground-faint: oklch(0.580 0.0160 264);
+	--btn-bg: oklch(0.420 0.1610 264);
 }
 
 @font-face {
