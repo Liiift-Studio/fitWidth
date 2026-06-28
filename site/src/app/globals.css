@@ -9,6 +9,7 @@
 	--foreground-subtle: oklch(0.680 0.0200 264);
 	--foreground-faint: oklch(0.580 0.0160 264);
 	--btn-bg: oklch(0.420 0.1610 264);
+	--panel: oklch(0.390 0.1361 264);
 }
 
 @font-face {
