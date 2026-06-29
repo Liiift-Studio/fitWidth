@@ -79,11 +79,11 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 				ref={containerRef}
 				style={{
 					width: `${containerPct}%`,
-					border: '1px solid rgba(212,184,240,0.25)',
+					border: '1px solid color-mix(in oklch, var(--foreground) 25%, transparent)',
 					borderRadius: 4,
 					padding: '8px 0',
 					overflow: 'hidden',
-					background: 'rgba(212,184,240,0.04)',
+					background: 'color-mix(in oklch, var(--foreground) 4%, transparent)',
 				}}
 			>
 				<p
