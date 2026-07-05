@@ -46,26 +46,6 @@ function mockMeasurement() {
 }
 
 /**
- * Mock that differentiates element vs container measurements.
- * The element starts narrower; the container is always CONTAINER_W.
- * This lets us verify that the binary search actually changes the element's
- * reported width across iterations (simulating CSS responding to axis/tracking changes).
- */
-function mockDifferentiatedMeasurement(el: HTMLElement, container: HTMLElement) {
-	let callCount = 0
-	const elSpy = vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => {
-		// Simulate element growing toward CONTAINER_W with each iteration
-		callCount++
-		const w = Math.min(ELEMENT_W + callCount * 20, CONTAINER_W)
-		return { width: w, top: 0, left: 0, bottom: 20, right: w, height: 20, x: 0, y: 0, toJSON: () => {} } as DOMRect
-	})
-	const containerSpy = vi.spyOn(container, 'getBoundingClientRect').mockReturnValue(
-		{ width: CONTAINER_W, top: 0, left: 0, bottom: 20, right: CONTAINER_W, height: 20, x: 0, y: 0, toJSON: () => {} } as DOMRect
-	)
-	return { elSpy, containerSpy }
-}
-
-/**
  * Make an element with a parent container so 'container' target resolution works.
  * The element itself initially has width ELEMENT_W (simulated via inline style).
  */
@@ -360,18 +340,26 @@ describe('fitWidth', () => {
 		expect(() => applyFitWidth(el, { prefer: 'axis', axis: 'wdth+', axisMin: 75, axisMax: 125 })).not.toThrow()
 	})
 
-	// 26. Differentiated mock: binary search actually exercises direction logic
-	it('binary search converges — element grows toward container width', () => {
+	// 26. Binary search iterates: the probe is measured many times and fvs is set.
+	// Measurement now happens on the off-screen probe, so we spy the prototype
+	// (which the probe shares) rather than the live element instance.
+	it('binary search iterates — probe measured multiple times and fvs is set', () => {
 		cleanup?.() // release the shared prototype mock for this test
 		cleanup = null
 
-		const { el, container } = makeElement()
-		const { elSpy } = mockDifferentiatedMeasurement(el, container)
+		const { el } = makeElement()
+		let calls = 0
+		const spy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+			// Simulate rendered width growing with each successive measurement
+			calls++
+			const w = Math.min(ELEMENT_W + calls * 20, CONTAINER_W)
+			return { width: w, top: 0, left: 0, bottom: 20, right: w, height: 20, x: 0, y: 0, toJSON: () => {} } as DOMRect
+		})
 
 		applyFitWidth(el, { prefer: 'axis', axisMin: 75, axisMax: 125 })
 
-		// el.getBoundingClientRect was called multiple times (not just once)
-		expect(elSpy.mock.calls.length).toBeGreaterThan(1)
+		// getBoundingClientRect was called across multiple search iterations (target + probe reads)
+		expect(spy.mock.calls.length).toBeGreaterThan(1)
 		// fontVariationSettings was modified by the search
 		expect(el.style.fontVariationSettings.length).toBeGreaterThan(0)
 	})
