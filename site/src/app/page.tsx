@@ -5,6 +5,7 @@ import ToolDirectory from "@/components/ToolDirectory"
 import { version } from "../../../package.json"
 import { version as siteVersion } from "../../package.json"
 import SiteFooter from "../components/SiteFooter"
+import PortsSection from "../components/PortsSection"
 import { MagnetChar } from "@liiift-studio/magnettype"
 
 /** JSON-LD structured data for SoftwareApplication rich results */
@@ -141,6 +142,14 @@ removeFitWidth(el)`} />
 					</div>
 				</div>
 			</section>
+
+			<PortsSection
+				npm="@liiift-studio/fitwidth"
+				bundle="fitwidth"
+				attr="data-fitwidth"
+				framerComponent="FitWidth"
+				repo="Liiift-Studio/FitWidth"
+			/>
 
 			<SiteFooter current="fitWidth" npmVersion={version} siteVersion={siteVersion} />
 
