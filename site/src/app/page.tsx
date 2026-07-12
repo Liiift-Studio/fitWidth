@@ -146,7 +146,7 @@ removeFitWidth(el)`} />
 			<PortsSection
 				npm="@liiift-studio/fitwidth"
 				bundle="fitwidth"
-				attr="data-fitwidth"
+				attr="data-fitwidth" figma="partial"
 				framerComponent="FitWidth"
 				repo="Liiift-Studio/FitWidth"
 			/>
