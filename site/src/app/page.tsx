@@ -37,7 +37,7 @@ export default function Home() {
 				<div className="flex items-center gap-4">
 					<CopyInstall />
 					<a
-						href="https://github.com/Liiift-Studio/FitWidth"
+						href="https://github.com/Liiift-Studio/fitWidth"
 						target="_blank"
 						rel="noopener noreferrer"
 						aria-label="FitWidth on GitHub (opens in new tab)"
