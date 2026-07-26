@@ -127,7 +127,7 @@ removeFitWidth(el)`} />
 									<th className="pb-2 font-normal">Description</th>
 								</tr>
 							</thead>
-							<tbody className="text-muted zebra-bleed">
+							<tbody className="text-muted zebra">
 								<tr className="hover:bg-foreground/5 transition-colors"><td className="py-2 pr-6 font-mono">target</td><td className="py-2 pr-6">&apos;container&apos;</td><td className="py-2">Width to fill: <code className="font-mono">&apos;container&apos;</code> (parent&apos;s rendered width via getBoundingClientRect), a pixel number, or an HTMLElement.</td></tr>
 								<tr className="hover:bg-foreground/5 transition-colors"><td className="py-2 pr-6 font-mono">prefer</td><td className="py-2 pr-6">&apos;auto&apos;</td><td className="py-2"><code className="font-mono">&apos;auto&apos;</code> — wdth axis first, then letter-spacing. <code className="font-mono">&apos;axis&apos;</code> — axis only. <code className="font-mono">&apos;tracking&apos;</code> — letter-spacing only.</td></tr>
 								<tr className="hover:bg-foreground/5 transition-colors"><td className="py-2 pr-6 font-mono">axis</td><td className="py-2 pr-6">&apos;wdth&apos;</td><td className="py-2">Variable font axis tag to binary-search.</td></tr>
