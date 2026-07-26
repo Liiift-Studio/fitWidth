@@ -78,7 +78,7 @@
 	"homepage": "https://fitwidth.com",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Liiift-Studio/fitWidth.git"
+		"url": "git+https://github.com/Liiift-Studio/fitWidth.git"
 	},
 	"bugs": {
 		"url": "https://github.com/Liiift-Studio/fitWidth/issues"
