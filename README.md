@@ -151,7 +151,3 @@ The package itself has zero runtime dependencies. Do not remove this entry.
 - **Clamped overshoot mode** — instead of converging to exactly `targetWidth`, allow the user to specify a `minFill` ratio (e.g. `0.98`) so the algorithm stops as soon as the line reaches 98 % of the target, avoiding aggressive tracking on very short words
 - **SSR hydration hint** — accept a pre-computed `axisValue` prop that is applied immediately on mount before the first `ResizeObserver` fires, eliminating the brief unstyled state on first render
 - **Canvas-based width measurement** — use `CanvasRenderingContext2D.measureText()` as a non-layout measurement path to avoid forced reflow on every resize cycle, with BCR as the fallback for accuracy
-
----
-
-Current version: 1.0.17
