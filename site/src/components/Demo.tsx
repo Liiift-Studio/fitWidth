@@ -70,6 +70,7 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 	// document.fonts.ready stays resolved so re-subscribing with [apply] causes double-applies.
 	useEffect(() => {
 		document.fonts.ready.then(apply)
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- see comment above: re-subscribing on `apply` double-applies
 	}, [])
 
 	return (
@@ -152,9 +153,10 @@ export default function Demo() {
 			const w = entries[0]?.contentRect.width
 			if (w) setDemoWidth(w)
 		})
+		// observe() delivers an initial observation synchronously, so the first callback
+		// sets the real width — no separate post-mount measurement needed. Until then the
+		// useState(800) default applies, matching the old fallback exactly.
 		ro.observe(el)
-		// Set initial width once mounted
-		setDemoWidth(el.getBoundingClientRect().width || 800)
 		return () => ro.disconnect()
 	}, [])
 
