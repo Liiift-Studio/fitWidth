@@ -2,6 +2,7 @@
 
 // Interactive demo: drag a width slider (or move cursor/tilt/angular) to see headlines fill their container exactly
 import { useState, useEffect, useCallback, useLayoutEffect, useRef, useMemo } from "react"
+import { useMediaQuery, useClientValue } from "@/lib/clientValue"
 import { applyFitWidth } from "@liiift-studio/fitwidth"
 import type { FitWidthOptions } from "@liiift-studio/fitwidth"
 
@@ -67,7 +68,6 @@ function HeadlineRow({ text, containerPct, prefer, showInternals }: { text: stri
 	// Re-run after fonts load once on mount — ResizeObserver handles subsequent re-fits.
 	// Deps are intentionally [] to avoid re-subscribing every time apply reference changes;
 	// document.fonts.ready stays resolved so re-subscribing with [apply] causes double-applies.
-	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => {
 		document.fonts.ready.then(apply)
 	}, [])
@@ -139,15 +139,10 @@ export default function Demo() {
 	const [gyroDenied, setGyroDenied] = useState(false)
 
 	// Detected capabilities — resolved client-side after mount
-	const [showCursor, setShowCursor] = useState(false)
-	const [showGyro, setShowGyro] = useState(false)
-
-	useEffect(() => {
-		const isHover = window.matchMedia('(hover: hover)').matches
-		const isTouch = window.matchMedia('(hover: none)').matches
-		setShowCursor(isHover)
-		setShowGyro(isTouch && 'DeviceOrientationEvent' in window)
-	}, [])
+	const showCursor = useMediaQuery('(hover: hover)')
+	const isTouch = useMediaQuery('(hover: none)')
+	const hasOrientation = useClientValue(() => 'DeviceOrientationEvent' in window, false)
+	const showGyro = isTouch && hasOrientation
 
 	// Track demo wrapper width for accurate angular pct computation
 	useEffect(() => {
